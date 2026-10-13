@@ -4,9 +4,12 @@ __pycache__/
 *$py.class
 build/
 dist/
+*.egg-info/
+mixnet_bci.egg-info/
 experiments/datasets/
 experiments/logs/
-mixnet_bci.egg-info/
+**/experiments/datasets/
+**/experiments/logs/
 .DS_Store
 .pypirc
 todo/

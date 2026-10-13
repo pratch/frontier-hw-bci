@@ -48,26 +48,26 @@ Electrodes $C_3$ (left hemisphere) and $C_4$ (right hemisphere) are the primary 
 
 ## 2. Reproducing the MixNet Baseline on `v21`
 
-A pre-configured Conda environment and GPU runner script are set up on `v21`. All commands should be run from `experiments/`:
+A pre-configured Conda environment and GPU runner script are set up on `v21`. All commands should be run from `MixNet-homework/experiments/`:
 
 ### Step 1: Download the Dataset
 ```bash
 # SSH into v21 and run download script
-ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/experiments && ../scripts/run_v21.sh python download_datasets.py --dataset BCIC2a'
+ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments && /ist-nas/users/pratchp/homework/frontier-hw-bci/scripts/run_v21.sh python download_datasets.py --dataset BCIC2a'
 ```
-* Downloads all 18 raw files (`A01T.mat`–`A09T.mat` and `A01E.mat`–`A09E.mat`) into `experiments/datasets/BCIC2a/raw/`.
+* Downloads all 18 raw files (`A01T.mat`–`A09T.mat` and `A01E.mat`–`A09E.mat`) into `MixNet-homework/experiments/datasets/BCIC2a/raw/`.
 
 ### Step 2: Run Baseline Preprocessing
 ```bash
-ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/experiments && ../scripts/run_v21.sh python prep_spectral_spatial_signals.py --dataset BCIC2a --setting dependent'
+ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments && /ist-nas/users/pratchp/homework/frontier-hw-bci/scripts/run_v21.sh python prep_spectral_spatial_signals.py --dataset BCIC2a --setting dependent'
 ```
 * Generates spectral-spatial signals using sub-band Common Spatial Patterns (CSP).
 * Produces 30 `.npy` files per subject across 5 folds (270 `.npy` files total) in:
-  `experiments/datasets/BCIC2a/spectral_spatial_signals/2_class/subject_dependent/`.
+  `MixNet-homework/experiments/datasets/BCIC2a/spectral_spatial_signals/2_class/subject_dependent/`.
 
 ### Step 3: Train MixNet (Subject-Dependent Baseline)
 ```bash
-ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/experiments && ../scripts/run_v21.sh python run_MixNet.py \
+ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments && /ist-nas/users/pratchp/homework/frontier-hw-bci/scripts/run_v21.sh python run_MixNet.py \
     --model_name MixNet \
     --dataset BCIC2a \
     --train_type subject_dependent \
@@ -85,7 +85,7 @@ ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/experiments && ../sc
 
 ### Step 4: Summarize Baseline Benchmark
 ```bash
-ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/experiments && ../scripts/run_v21.sh python benchmark.py'
+ssh v21 'cd /ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments && /ist-nas/users/pratchp/homework/frontier-hw-bci/scripts/run_v21.sh python benchmark.py'
 ```
 * Aggregates 5 folds for each subject and prints mean accuracy, F1-scores, and standard deviations into:
   - `benchmark_per_subject.csv`
@@ -141,7 +141,7 @@ MixNet joins classical BCI feature extraction (Filter Bank CSP) with a modern mu
    Concatenates across the 9 bands $\rightarrow 9 \times 2 = 18$ channels.
    Final input tensor shape per trial: `(1, 400, 18)` (height=1, time=400, channels=18).
 
-### Stage 2: Neural Network Architecture (`mixnet/models/MixNet.py`)
+### Stage 2: Neural Network Architecture (`MixNet-homework/mixnet/models/MixNet.py`)
 * **Encoder (`encoder`)**:
   1. `Conv2D(filters=18, kernel_size=(1, 64), activation='elu', padding='same')`:
      - 1D temporal convolution across time ($64\text{ samples} = 640\text{ ms}$ temporal receptive field).
@@ -159,7 +159,7 @@ MixNet joins classical BCI feature extraction (Filter Bank CSP) with a modern mu
 * **Classifier**:
   - `Dense(num_class=2, activation='softmax', kernel_constraint=max_norm(0.5))` directly on $z$.
 
-### Stage 3: Multi-Task Losses (`mixnet/loss.py`)
+### Stage 3: Multi-Task Losses (`MixNet-homework/mixnet/loss.py`)
 MixNet trains jointly with three losses:
 $$\mathcal{L}_{\text{total}} = w_{\text{mse}} \mathcal{L}_{\text{mse}}(x, x_r) + w_{\text{triplet}} \mathcal{L}_{\text{triplet}}(y, z) + w_{\text{ce}} \mathcal{L}_{\text{ce}}(y, \hat{y})$$
 1. **$\mathcal{L}_{\text{mse}}$ (Reconstruction)**: Mean squared error forcing $z$ to retain signal information.
@@ -176,7 +176,7 @@ $$\mathcal{L}_{\text{total}} = w_{\text{mse}} \mathcal{L}_{\text{mse}}(x, x_r) +
 
 Below is a reference guide to all key configurable settings in the MixNet baseline:
 
-### Command-Line Arguments (`experiments/run_MixNet.py`)
+### Command-Line Arguments (`MixNet-homework/experiments/run_MixNet.py`)
 | Parameter | Default | Description |
 |---|---|---|
 | `--dataset` | `BCIC2a` | Dataset name (`BCIC2a`, `BCIC2b`, etc.). |
@@ -190,7 +190,7 @@ Below is a reference guide to all key configurable settings in the MixNet baseli
 | `--subjects` | `None` (all 1–9) | Specific subject(s) to train, e.g. `--subjects 1`. |
 | `--GPU` | `0` | GPU index to run on. |
 
-### Model & Training Parameters (`experiments/configs/MixNet.py`)
+### Model & Training Parameters (`MixNet-homework/experiments/configs/MixNet.py`)
 | Parameter | Default | Description |
 |---|---|---|
 | `input_shape` | `(1, 400, 18)` | Shape of each input trial (excluding batch dimension). |
