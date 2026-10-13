@@ -163,13 +163,21 @@ MixNet combines classical signal processing (Filter Bank CSP) with a multi-task 
 ### Stage 1: Preprocessing & CSP Signal Generation (`prep_spectral_spatial_signals.py`)
 1. **Sub-Band Decomposition**:
    Decomposes the 20 EEG channels into 9 adjacent frequency sub-bands:
-   $$[4, 8], [8, 12], [12, 16], [16, 20], [20, 24], [24, 28], [28, 32], [32, 36], [36, 40]\text{ Hz}$$
+   `[4, 8]`, `[8, 12]`, `[12, 16]`, `[16, 20]`, `[20, 24]`, `[24, 28]`, `[28, 32]`, `[32, 36]`, `[36, 40]` Hz
    using a 5th-order Butterworth bandpass filter.
 2. **Common Spatial Pattern (CSP)**:
    For each sub-band $b$, computes normalized average spatial covariance matrices:
-   $$\Sigma_1 = \frac{1}{N_1} \sum \frac{X X^T}{\text{Tr}(X X^T)}, \quad \Sigma_2 = \frac{1}{N_2} \sum \frac{X X^T}{\text{Tr}(X X^T)}$$
+
+   $$
+   \Sigma_1 = \frac{1}{N_1} \sum \frac{X X^T}{\text{Tr}(X X^T)}, \quad \Sigma_2 = \frac{1}{N_2} \sum \frac{X X^T}{\text{Tr}(X X^T)}
+   $$
+
    Solves the generalized eigenvalue problem:
-   $$\Sigma_1 W = \lambda (\Sigma_1 + \Sigma_2) W$$
+
+   $$
+   \Sigma_1 W = \lambda (\Sigma_1 + \Sigma_2) W
+   $$
+
    Picks $n_{\text{components}} = 2$ spatial filters (extremal eigenvalues) per band.
 3. **Spectral-Spatial Signal Formation**:
    Applies spatial projection: $S_b = W_b^T X_b$.
@@ -195,8 +203,13 @@ MixNet combines classical signal processing (Filter Bank CSP) with a multi-task 
   - `Dense(num_class=2, activation='softmax', kernel_constraint=max_norm(0.5))` directly on $z$.
 
 ### Stage 3: Multi-Task Losses (`MixNet-homework/mixnet/loss.py`)
+
 MixNet trains jointly with three losses:
-$$\mathcal{L}_{\text{total}} = w_{\text{mse}} \mathcal{L}_{\text{mse}}(x, x_r) + w_{\text{triplet}} \mathcal{L}_{\text{triplet}}(y, z) + w_{\text{ce}} \mathcal{L}_{\text{ce}}(y, \hat{y})$$
+
+$$
+\mathcal{L}_{\text{total}} = w_{\text{mse}} \mathcal{L}_{\text{mse}}(x, x_r) + w_{\text{triplet}} \mathcal{L}_{\text{triplet}}(y, z) + w_{\text{ce}} \mathcal{L}_{\text{ce}}(y, \hat{y})
+$$
+
 1. **$\mathcal{L}_{\text{mse}}$ (Reconstruction)**: Mean squared error forcing latent vector $z$ to retain signal information.
 2. **$\mathcal{L}_{\text{triplet}}$ (Metric Learning)**: Semi-hard triplet loss with `margin=1.0`, clustering same-class latent vectors and separating opposite-class vectors.
 3. **$\mathcal{L}_{\text{ce}}$ (Classification)**: Sparse categorical cross-entropy predicting Left vs. Right hand.
