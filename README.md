@@ -64,6 +64,7 @@ The objective is to design your own MI-EEG pipeline (**HWNet**), evaluate it acr
   - [ ] Generate baseline summary: `python benchmark.py`
 
 - [ ] **Phase 2: Part 1 — Design Preprocessing & Feature Extraction (`HW_prep`)**
+  - **Our pipeline, output shape and settings**: [`docs/hw_preprocessing.md`](docs/hw_preprocessing.md)
   - **File to Edit**: [`MixNet-homework/mixnet/preprocessing/BCIC2a/HW_prep.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/mixnet/preprocessing/BCIC2a/HW_prep.py)
     - Implement `fit_transform(X, y, pick_smp_freq, **kwargs)`: Learn data-driven parameters (e.g. CSP filters, scalers, whitening) on the **TRAINING fold only**, and return `(X_out, state)`.
     - Implement `transform(X, pick_smp_freq, state, **kwargs)`: Apply the learned state to validation and test folds without refitting.
@@ -111,6 +112,7 @@ The objective is to design your own MI-EEG pipeline (**HWNet**), evaluate it acr
   - Analyze per-subject results (which subjects improved, which did not, and neurophysiological justification).
 
 > **Documentation References:**
+> * Our HW preprocessing (Part 1): [`docs/hw_preprocessing.md`](docs/hw_preprocessing.md)
 > * Concise MixNet paper TL;DR: [`docs/mixnet_paper_summary.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/mixnet_paper_summary.md)
 > * Course Assignment Overview: [`docs/HWNet_Homework_Overview.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/HWNet_Homework_Overview.pdf)
 > * MixNet Full Paper: [`docs/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/MixNet_Paper.pdf)
@@ -360,6 +362,7 @@ $$
 ```text
 frontier-hw-bci/
 ├── docs/                                          # Course & reference PDFs and guides
+│   ├── hw_preprocessing.md                        # Our Part 1 pipeline: usage & output shape
 │   ├── mixnet_paper_summary.md                    # Concise TL;DR & design takeaways
 │   ├── HWNet_Homework_Overview.pdf                # Homework overview slides
 │   ├── MixNet_Paper.pdf                           # MixNet main IEEE/arXiv paper
