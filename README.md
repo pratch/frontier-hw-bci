@@ -4,10 +4,11 @@ This repository contains the Motor Imagery EEG (MI-EEG) classification benchmark
 
 This guide provides:
 1. **Universal Environment Setup** (portable for any machine with Python and an NVIDIA GPU).
-2. **Step-by-Step Baseline Reproduction** (dataset download, preprocessing, training, and benchmarking).
-3. **Dataset Overview & Evaluation Protocol** (trial timing, channels, 5-fold cross-validation, and test rules).
-4. **Deconstruction of the MixNet Pipeline Stages** (signal processing, network architecture, multi-task losses, and adaptive gradient blending).
-5. **Configurable Parameters & Hyperparameters Reference Table**.
+2. **Homework Roadmap & Implementation Checklist** (files to edit, commands to run, and benchmark workflow).
+3. **Step-by-Step Baseline Reproduction** (dataset download, preprocessing, training, and benchmarking).
+4. **Dataset Overview & Evaluation Protocol** (trial timing, channels, 5-fold cross-validation, and test rules).
+5. **Deconstruction of the MixNet Pipeline Stages** (signal processing, network architecture, multi-task losses, and adaptive gradient blending).
+6. **Configurable Parameters & Hyperparameters Reference Table**.
 
 ---
 
@@ -43,7 +44,80 @@ python -c "import mixnet; print('MixNet package:', mixnet.__file__); import tens
 
 ---
 
-## 2. Quickstart: Reproduce the Baseline
+## 2. Homework Roadmap & Implementation Checklist
+
+The objective is to design your own MI-EEG pipeline (**HWNet**), evaluate it across all 9 subjects on BCIC2a using 5-fold cross-validation, and statistically compare it against **MixNet**.
+
+### Grading Breakdown
+* **Part 1: Preprocessing & Feature Extraction** (30%)
+* **Part 2: Neural Network Model Design** (30%)
+* **Part 3: Report & Statistical Analysis** (40% — 15-minute presentation)
+
+### Implementation Checklist
+
+- [ ] **Phase 1: Environment & Baseline Reproduction**
+  - [x] Configure Conda environment (`mixnet` with Python 3.8.10 & TF-GPU 2.7.0).
+  - [ ] Download raw dataset: `python download_datasets.py --dataset BCIC2a`
+  - [ ] Run baseline preprocessing: `python prep_spectral_spatial_signals.py --dataset BCIC2a --setting dependent`
+  - [ ] Run MixNet on Subject 1 smoke test: `python run_MixNet.py ... --subjects 1`
+  - [ ] Run MixNet across all 9 subjects: `python run_MixNet.py ...`
+  - [ ] Generate baseline summary: `python benchmark.py`
+
+- [ ] **Phase 2: Part 1 — Design Preprocessing & Feature Extraction (`HW_prep`)**
+  - **File to Edit**: [`MixNet-homework/mixnet/preprocessing/BCIC2a/HW_prep.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/mixnet/preprocessing/BCIC2a/HW_prep.py)
+    - Implement `fit_transform(X, y, pick_smp_freq, **kwargs)`: Learn data-driven parameters (e.g. CSP filters, scalers, whitening) on the **TRAINING fold only**, and return `(X_out, state)`.
+    - Implement `transform(X, pick_smp_freq, state, **kwargs)`: Apply the learned state to validation and test folds without refitting.
+    - **The Golden Rule**: Strictly avoid data leakage. No parameters may be fitted on validation folds or Session E.
+  - **Script to Run**:
+    ```bash
+    cd MixNet-homework/experiments
+    python prep_HW.py
+    ```
+  - **Output Path**: `MixNet-homework/experiments/datasets/BCIC2a/HW_prep/2_class/subject_dependent/` (30 `.npy` files per subject).
+
+- [ ] **Phase 3: Part 2 — Design Your Neural Network Architecture (`HWNet`)**
+  - **Files to Edit**:
+    1. [`MixNet-homework/mixnet/models/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/mixnet/models/HWNet.py):
+       - Declare architecture hyperparameters in `_config()`.
+       - Implement `build()`: Return a `tf.keras.models.Model` taking input shape from Part 1 and ending with `Activation('softmax')` probabilities.
+    2. [`MixNet-homework/experiments/configs/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments/configs/HWNet.py):
+       - Implement `get_params(**kwargs)` returning a `dotdict` with `data_params` (e.g. `data_format`, `input_shape`) and `model_params` (batch size, learning rate, epochs).
+  - **Scripts to Run**:
+    ```bash
+    cd MixNet-homework/experiments
+
+    # 1. Single subject smoke-test (quick verification)
+    python run_HWNet.py --subjects 1
+
+    # 2. Full benchmark run (all 9 subjects x 5 folds)
+    python run_HWNet.py --GPU 0
+    ```
+  - **Output Path**: `MixNet-homework/experiments/logs/HWNet/subject_dependent_2_classes_BCIC2a/` (contains per-subject `S00*_all_results.csv` and fold logs).
+
+- [ ] **Phase 4: Part 3 — Benchmark & Compare Against MixNet Baseline**
+  - **Script to Run**:
+    ```bash
+    cd MixNet-homework/experiments
+    python benchmark.py --baseline MixNet --candidate HWNet
+    ```
+  - **Outputs Produced**:
+    - `benchmark_per_subject.csv`: Subject-by-subject table comparing test accuracy and macro F1-score.
+    - `benchmark_summary.csv`: Overall dataset mean ± standard deviation.
+    - Formatted markdown table on stdout with **Paired t-test** and **Wilcoxon signed-rank test** ($p$-values) to evaluate statistical significance.
+
+- [ ] **Phase 5: Report & Presentation Preparation (15-min Presentation)**
+  - State your core hypothesis motivating your preprocessing and network design.
+  - Conduct ablation studies (e.g., preprocessing contribution vs. architecture contribution).
+  - Analyze per-subject results (which subjects improved, which did not, and neurophysiological justification).
+
+> **Documentation References:**
+> * Concise MixNet paper TL;DR: [`docs/mixnet_paper_summary.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/mixnet_paper_summary.md)
+> * Course Assignment Overview: [`docs/HWNet_Homework_Overview.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/HWNet_Homework_Overview.pdf)
+> * MixNet Full Paper: [`docs/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/MixNet_Paper.pdf)
+
+---
+
+## 3. Quickstart: Reproduce the Baseline
 
 All experiment commands are executed from `MixNet-homework/experiments/`:
 
@@ -121,7 +195,7 @@ python benchmark.py
 
 ---
 
-## 3. Understanding the BCIC2a Dataset
+## 4. Understanding the BCIC2a Dataset
 
 The **BCI Competition IV-2a** (`BCIC2a`) is a standard benchmark for 2-class motor imagery (Left Hand vs. Right Hand).
 
@@ -157,7 +231,7 @@ Electrodes $C_3$ (left hemisphere) and $C_4$ (right hemisphere) are the primary 
 
 ---
 
-## 4. Deconstruction of the MixNet Baseline Stages
+## 5. Deconstruction of the MixNet Baseline Stages
 
 MixNet combines classical signal processing (Filter Bank CSP) with a multi-task deep representation learning network.
 
@@ -252,7 +326,7 @@ $$
 
 ---
 
-## 5. Configurable Parameters & Hyperparameters Reference
+## 6. Configurable Parameters & Hyperparameters Reference
 
 ### Command-Line Arguments (`MixNet-homework/experiments/run_MixNet.py`)
 | Parameter | Default | Description |
@@ -281,11 +355,12 @@ $$
 
 ---
 
-## 6. Repository Layout
+## 7. Repository Layout
 
 ```text
 frontier-hw-bci/
-├── docs/                                          # Course & reference PDFs
+├── docs/                                          # Course & reference PDFs and guides
+│   ├── mixnet_paper_summary.md                    # Concise TL;DR & design takeaways
 │   ├── HWNet_Homework_Overview.pdf                # Homework overview slides
 │   ├── MixNet_Paper.pdf                           # MixNet main IEEE/arXiv paper
 │   └── Supplementary_Materials_for_MixNet_...pdf  # MixNet supplementary details
