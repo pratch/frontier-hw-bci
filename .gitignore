@@ -13,3 +13,4 @@ experiments/logs/
 .DS_Store
 .pypirc
 todo/
+scripts/
