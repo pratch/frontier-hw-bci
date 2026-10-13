@@ -57,6 +57,8 @@ from sklearn.model_selection import StratifiedKFold
 
 from mixnet.preprocessing.BCIC2a import raw
 from mixnet.preprocessing.config import CONSTANT
+from mixnet.preprocessing.SpectralSpatialSignalGeneration import \
+    SpectralSpatialSignalGeneration
 
 CONSTANT = CONSTANT['BCIC2a']
 raw_path = CONSTANT['raw_path']
@@ -75,7 +77,8 @@ DATA_TYPE = 'HW_prep'
 #  NOTE: you are allowed to add any extra arguments to `fit_transform()` and `transform()`
 #  but you must NOT change the signature of `subject_dependent_setting()`.
 # =============================================================================
-def fit_transform(X, y, pick_smp_freq, **kwargs):
+def fit_transform(X, y, pick_smp_freq, bands, n_components, order, win_len,
+                  win_step, norm_logvar, **kwargs):
     """Learn the pipeline parameters on the TRAINING fold and transform it.
 
     Called once per (subject, fold) with the training split only.
@@ -85,8 +88,17 @@ def fit_transform(X, y, pick_smp_freq, **kwargs):
         y (np.ndarray): (n_trials,) labels in {0, 1}. Use them if your
             pipeline is supervised (e.g. CSP); ignore them otherwise.
         pick_smp_freq (int): sampling rate of `X` in Hz (100 by default).
+        bands (list[[low, high]]): filter-bank sub-bands in Hz.
+        n_components (int): CSP components kept per band (half from each end
+            of the eigenvalue spectrum, lecture p.57).
+        order (int): Butterworth band-pass order.
+        win_len, win_step (float): log-variance window length / hop in s.
+        norm_logvar (bool): normalize log-variance within each band (p.59).
         **kwargs: whatever extra hyper-parameters you forward from
             `experiments/prep_HW.py` (band definitions, n_components, ...).
+
+    Output shape: (n_trials, len(bands) * n_components, n_windows), channel
+    axis ordered band-major (band 0 comps 0..n-1, band 1 comps ...).
 
     Returns:
         X_out (np.ndarray): (n_trials, ...) transformed training features.
@@ -101,10 +113,34 @@ def fit_transform(X, y, pick_smp_freq, **kwargs):
         NOTE: You can also add your own helper functions in this file or in
         `mixnet/preprocessing/BCIC2a/HW_prep_helpers.py` if you want to keep this file clean.
     """
-    raise NotImplementedError(
-        'HOMEWORK: implement fit_transform() in '
-        'mixnet/preprocessing/BCIC2a/HW_prep.py'
-    )
+    # Pipeline: filter bank -> CSP per band -> windowed normalized
+    # log-variance -> per-channel standardization. Hyper-parameters come from
+    # experiments/prep_HW.py. Every learned step (CSP, mean/std) is fitted here,
+    # on the training fold only, and stored in `state`.
+
+    # 1) filter bank + CSP per band, fitted on this fold ("Fit CSP: training
+    #    data only", lecture p.60).
+    # ponytail: reuses MixNet's own CSP generator, so filter bank and CSP
+    # match the baseline and only the steps after it differ.
+    csp = SpectralSpatialSignalGeneration(bands=bands, smp_freq=pick_smp_freq,
+                                          order=order,
+                                          n_components=n_components)
+    S = csp.fit_transform(X, y)
+
+    # 2) CSP time series -> log-variance per short window.
+    F = _windowed_log_var(S, pick_smp_freq, len(bands), n_components,
+                          win_len, win_step, norm_logvar)
+
+    # 3) per-channel standardization with training-fold statistics
+    #    ("Training-set per-channel standardization", lecture p.31).
+    mean = F.mean(axis=(0, 2), keepdims=True)
+    std = F.std(axis=(0, 2), keepdims=True)
+
+    state = {'csp': csp, 'mean': mean, 'std': std,
+             'n_bands': len(bands), 'n_components': n_components,
+             'win_len': win_len, 'win_step': win_step,
+             'norm_logvar': norm_logvar}
+    return ((F - mean) / std).astype(np.float32), state
 
 
 # =============================================================================
@@ -130,10 +166,33 @@ def transform(X, state, pick_smp_freq, **kwargs):
         X_out (np.ndarray): (n_trials, ...) features with the SAME trailing
             shape as the output of `fit_transform()`.
     """
-    raise NotImplementedError(
-        'HOMEWORK: implement transform() in '
-        'mixnet/preprocessing/BCIC2a/HW_prep.py'
-    )
+    # Everything comes from `state`; the kwargs are ignored on purpose so
+    # val/test can never be processed with settings different from training.
+    S = state['csp'].transform(X)
+    F = _windowed_log_var(S, pick_smp_freq, state['n_bands'],
+                          state['n_components'], state['win_len'],
+                          state['win_step'], state['norm_logvar'])
+    return ((F - state['mean']) / state['std']).astype(np.float32)
+
+
+def _windowed_log_var(S, smp_freq, n_bands, n_components, win_len, win_step,
+                      norm_logvar):
+    """CSP time series (n, n_bands*n_components, T) -> (n, same, n_windows).
+
+    Classic CSP takes ONE log-variance per trial and loses the timing of
+    ERD/ERS inside the trial (lecture p.62). Taking it per short window keeps
+    that timing. Stateless, so it is safe on every split.
+    """
+    win, step = int(win_len * smp_freq), int(win_step * smp_freq)
+    var = np.lib.stride_tricks.sliding_window_view(
+        S, win, axis=-1)[:, :, ::step].var(axis=-1)
+    if norm_logvar:
+        # normalized log-variance, log(var_i / sum_j var_j) over the CSP
+        # components of the same band (lecture p.59)
+        n, _, n_win = var.shape
+        var = var.reshape(n, n_bands, n_components, n_win)
+        var = (var / var.sum(axis=2, keepdims=True)).reshape(n, -1, n_win)
+    return np.log(var)
 
 
 # =============================================================================
@@ -254,3 +313,4 @@ def _save_data_with_valset(save_path, NAME, X_train, y_train,
     np.save(save_path + '/y_val_' + NAME + '.npy', y_val)
     np.save(save_path + '/y_test_' + NAME + '.npy', y_test)
     print('save DONE')
+
