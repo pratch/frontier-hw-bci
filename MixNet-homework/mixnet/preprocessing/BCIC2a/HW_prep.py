@@ -314,3 +314,24 @@ def _save_data_with_valset(save_path, NAME, X_train, y_train,
     np.save(save_path + '/y_test_' + NAME + '.npy', y_test)
     print('save DONE')
 
+
+if __name__ == '__main__':
+    # Self-check on synthetic data: python -m mixnet.preprocessing.BCIC2a.HW_prep
+    rng = np.random.default_rng(0)
+    X_tr, y_tr = rng.standard_normal((40, 20, 400)), np.repeat([0, 1], 20)
+    X_te = rng.standard_normal((10, 20, 400))
+    hp = dict(bands=[[8, 12], [12, 16], [16, 20]], n_components=4, order=5,
+              win_len=0.5, win_step=0.25, norm_logvar=True)
+
+    F_tr, st = fit_transform(X_tr, y_tr, pick_smp_freq=100, **hp)
+    assert F_tr.shape == (40, 12, 15) and F_tr.dtype == np.float32
+    # standardized with training statistics: mean 0, std 1 per channel
+    assert np.allclose(F_tr.mean(axis=(0, 2)), 0, atol=1e-4)
+    assert np.allclose(F_tr.std(axis=(0, 2)), 1, atol=1e-4)
+    # transform() reproduces the training features, i.e. it only reads state
+    assert np.allclose(transform(X_tr, st, pick_smp_freq=100), F_tr, atol=1e-4)
+    # no batch statistics on unseen data: a trial's features do not depend
+    # on which other trials are in the same split
+    F_te = transform(X_te, st, pick_smp_freq=100)
+    assert np.allclose(transform(X_te[:1], st, pick_smp_freq=100), F_te[:1])
+    print('HW_prep self-check passed:', F_tr.shape, F_te.shape)
