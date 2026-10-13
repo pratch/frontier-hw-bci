@@ -55,14 +55,28 @@ cd MixNet-homework/experiments
 ```bash
 python download_datasets.py --dataset BCIC2a
 ```
-* Automatically downloads all 18 files (`A01T.mat`–`A09T.mat` and `A01E.mat`–`A09E.mat`) into `MixNet-homework/experiments/datasets/BCIC2a/raw/`.
+* **Output Location**: `MixNet-homework/experiments/datasets/BCIC2a/raw/`
+* **What is generated**:
+  - 18 MATLAB `.mat` files (~15 MB each):
+    - `A01T.mat` to `A09T.mat` (Session T: training and validation data for Subjects 1–9)
+    - `A01E.mat` to `A09E.mat` (Session E: held-out evaluation data for Subjects 1–9)
+  - Each file contains 22-channel continuous EEG signals along with event marker codes.
 
 ### Step 2: Run Baseline Preprocessing
 ```bash
 python prep_spectral_spatial_signals.py --dataset BCIC2a --setting dependent
 ```
-* Decomposes signals across 9 sub-bands and fits Common Spatial Pattern (CSP) filters.
-* Generates 30 `.npy` files per subject across 5 folds (270 files total) in `MixNet-homework/experiments/datasets/BCIC2a/spectral_spatial_signals/2_class/subject_dependent/`.
+* **Output Location**: `MixNet-homework/experiments/datasets/BCIC2a/spectral_spatial_signals/2_class/2_csp_components/subject_dependent/`
+* **What is generated**:
+  - Total of **270 `.npy` files** (30 files per subject across 9 subjects).
+  - For each subject (e.g., `S001`), the dataset is split into 5 stratified cross-validation folds:
+    - `S001_fold01_X_train.npy`, `S001_fold01_y_train.npy` (4 folds of Session T used for training)
+    - `S001_fold01_X_val.npy`, `S001_fold01_y_val.npy` (1 fold of Session T used for model checkpoint selection)
+    - `S001_fold01_X_test.npy`, `S001_fold01_y_test.npy` (Untouched Session E test set)
+    - Repeated for `fold02` through `fold05`.
+  - **Data Shape**:
+    - `X`: `(N_trials, 1, 400, 18)` — 400 time steps (4 seconds at 100 Hz), 18 channels (9 frequency sub-bands $\times$ 2 CSP components).
+    - `y`: `(N_trials,)` — binary class labels (`0` = Left Hand, `1` = Right Hand).
 
 ### Step 3: Train MixNet (Subject-Dependent Baseline)
 ```bash
@@ -82,13 +96,28 @@ python run_MixNet.py \
 ```
 *(Tip: To test on a single subject first, append `--subjects 1` to the command above).*
 
+* **Output Location**:
+  `MixNet-homework/experiments/logs/MixNet/subject_dependent_2_classes_BCIC2a_HistoricalTangentSlope_csp_components_2_margin_1.0_latent_dim_18_warmup_7/`
+* **What is generated per subject (e.g., `S001`)**:
+  - **`S001_all_results.csv`**: Evaluation table summarizing test performance on held-out Session E across all 5 folds:
+    - `test_acc`: Test accuracy on Session E (Subject 1 baseline reaches ~85.5% mean test accuracy).
+    - `f1-score`: Macro F1-score across folds.
+    - `test_loss`, `test_mse_loss`, `test_triplet_loss`, `test_crossentropy_loss`: Total and component test losses.
+    - `w_mse_loss`, `w_triplet_loss`, `w_crossentropy_loss`: Final loss weights assigned by Adaptive Gradient Blending.
+    - `prediction_time`, `memory_usage`: Inference latency per sample and memory footprint.
+  - **`S001_fold01_out_log.csv` to `S001_fold05_out_log.csv`**: Epoch-by-epoch loss and accuracy curves (train and validation) for all training epochs.
+  - **`S001_fold01_time_log.csv` to `S001_fold05_time_log.csv`**: Wall-clock training time recorded per epoch.
+  - **`S001_prediction_results.npy`**: Saved raw model prediction probabilities and ground-truth labels on the test set.
+
 ### Step 4: Summarize Benchmark Results
 ```bash
 python benchmark.py
 ```
-* Aggregates fold performance for each subject and generates:
-  - `benchmark_per_subject.csv` (per-subject mean test accuracy & F1-score)
-  - `benchmark_summary.csv` (overall dataset mean ± standard deviation)
+* **Output Location**: `MixNet-homework/experiments/`
+* **What is generated**:
+  - **`benchmark_per_subject.csv`**: Aggregated table showing the 5-fold mean test accuracy and F1-score for each subject individually (`S001` through `S009`).
+  - **`benchmark_summary.csv`**: Overall benchmark score summarizing mean performance and standard deviation across all subjects.
+  - **Console Markdown Table**: Prints a paste-ready Markdown table comparing runs directly to stdout.
 
 ---
 
@@ -161,28 +190,31 @@ MixNet combines classical signal processing (Filter Bank CSP) with a multi-task 
 ```
 
 ### Stage 1: Preprocessing & CSP Signal Generation (`prep_spectral_spatial_signals.py`)
-1. **Sub-Band Decomposition**:
-   Decomposes the 20 EEG channels into 9 adjacent frequency sub-bands:
-   `[4, 8]`, `[8, 12]`, `[12, 16]`, `[16, 20]`, `[20, 24]`, `[24, 28]`, `[28, 32]`, `[32, 36]`, `[36, 40]` Hz
-   using a 5th-order Butterworth bandpass filter.
-2. **Common Spatial Pattern (CSP)**:
-   For each sub-band $b$, computes normalized average spatial covariance matrices:
 
-   $$
-   \Sigma_1 = \frac{1}{N_1} \sum \frac{X X^T}{\text{Tr}(X X^T)}, \quad \Sigma_2 = \frac{1}{N_2} \sum \frac{X X^T}{\text{Tr}(X X^T)}
-   $$
+#### 1. Sub-Band Decomposition
+Decomposes the 20 EEG channels into 9 adjacent frequency sub-bands:
+`[4, 8]`, `[8, 12]`, `[12, 16]`, `[16, 20]`, `[20, 24]`, `[24, 28]`, `[28, 32]`, `[32, 36]`, `[36, 40]` Hz
+using a 5th-order Butterworth bandpass filter.
 
-   Solves the generalized eigenvalue problem:
+#### 2. Common Spatial Pattern (CSP)
+For each sub-band $b$, computes normalized average spatial covariance matrices:
 
-   $$
-   \Sigma_1 W = \lambda (\Sigma_1 + \Sigma_2) W
-   $$
+$$
+\Sigma_1 = \frac{1}{N_1} \sum \frac{X X^T}{\text{Tr}(X X^T)}, \quad \Sigma_2 = \frac{1}{N_2} \sum \frac{X X^T}{\text{Tr}(X X^T)}
+$$
 
-   Picks $n_{\text{components}} = 2$ spatial filters (extremal eigenvalues) per band.
-3. **Spectral-Spatial Signal Formation**:
-   Applies spatial projection: $S_b = W_b^T X_b$.
-   Concatenates across all 9 bands $\rightarrow 9 \times 2 = 18$ channels.
-   Final input tensor shape per trial: `(1, 400, 18)` (height=1, time=400, channels=18).
+Solves the generalized eigenvalue problem:
+
+$$
+\Sigma_1 W = \lambda (\Sigma_1 + \Sigma_2) W
+$$
+
+Picks $n_{\text{components}} = 2$ spatial filters (extremal eigenvalues) per band.
+
+#### 3. Spectral-Spatial Signal Formation
+Applies spatial projection: $S_b = W_b^T X_b$.
+Concatenates across all 9 bands $\rightarrow 9 \times 2 = 18$ channels.
+Final input tensor shape per trial: `(1, 400, 18)` (height=1, time=400, channels=18).
 
 ### Stage 2: Neural Network Architecture (`MixNet-homework/mixnet/models/MixNet.py`)
 * **Encoder (`encoder`)**:
