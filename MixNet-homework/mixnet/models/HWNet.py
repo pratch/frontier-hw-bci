@@ -149,21 +149,19 @@ class HWNet(models.base.BaseModel):
             channels_first -> input_shape = (depth, n_channels, n_samples)
             channels_last  -> input_shape = (n_channels, n_samples, depth)
         """
-        raise NotImplementedError(
-            'HOMEWORK: implement _config() in mixnet/models/HWNet.py'
-        )
+        self.F1 = 32
+        self.F2 = 16
+        self.kernel_length = 3
+        self.pool_length = 2
+        self.dropout_rate = 0.5
+        self.norm_rate = 0.5
 
-        # Sketch of what a filled-in version looks like -- delete the raise
-        # above and adapt:
-        #
-        # self.F1 = 8
-        # self.kernel_length = 64
-        # self.dropout_rate = 0.5
-        # self.norm_rate = 0.25
-        # if self.data_format == 'channels_first':
-        #     self.Chans, self.Samples = self.input_shape[1], self.input_shape[2]
-        # else:
-        #     self.Chans, self.Samples = self.input_shape[0], self.input_shape[1]
+        if self.data_format == 'channels_last':
+            self.Depth = self.input_shape[0]
+            self.Time = self.input_shape[1]
+            self.Channels = self.input_shape[2]
+        else:
+            self.Channels, self.Time = self.input_shape[0], self.input_shape[1]
 
         # Keep this last: it lets the experiment config override the defaults.
         for k in kwargs.keys():
@@ -173,42 +171,62 @@ class HWNet(models.base.BaseModel):
     #  TODO 2 / 2 -- the network itself
     # =========================================================================
     def build(self, print_summary=True, load_weights=False):
-        """Build and return your architecture as a `tf.keras.models.Model`.
+        """Build and return your architecture as a `tf.keras.models.Model`."""
+        input1 = layers.Input(shape=self.input_shape, name='input')
 
-        Called three times per fold (fit, evaluate, predict), so it must be
-        deterministic and free of side effects.
+        # Block 1: Temporal convolution over the 15 sliding windows
+        x = layers.Conv2D(self.F1, (1, self.kernel_length), padding='same',
+                          activation='elu',
+                          kernel_constraint=max_norm(2.0),
+                          name='conv1')(input1)
+        x = layers.BatchNormalization(axis=-1, name='bn1')(x)
+        x = layers.Dropout(self.dropout_rate, name='drop1')(x)
 
-        Args:
-            print_summary (bool): print `model.summary()` when True.
-            load_weights (bool): restore the best checkpoint of this fold.
+        # Block 2: Second temporal convolution + temporal downsampling
+        x = layers.Conv2D(self.F2, (1, self.kernel_length), padding='same',
+                          activation='elu',
+                          kernel_constraint=max_norm(2.0),
+                          name='conv2')(x)
+        x = layers.BatchNormalization(axis=-1, name='bn2')(x)
+        x = layers.AveragePooling2D(pool_size=(1, self.pool_length), name='pool2')(x)
+        x = layers.Dropout(self.dropout_rate, name='drop2')(x)
 
-        Returns:
-            tf.keras.models.Model with a single (batch, num_class) softmax output.
+        # Classifier head
+        x = layers.Flatten(name='flatten')(x)
+        x = layers.Dense(self.num_class, kernel_constraint=max_norm(self.norm_rate), name='dense')(x)
+        softmax = layers.Activation('softmax', name='softmax')(x)
 
-        Design ideas -- you must be able to explain WHY you chose yours:
-            * temporal conv + depthwise spatial conv (the EEGNet family)
-            * multi-scale / inception-style parallel temporal kernels
-            * separable convolutions + squeeze-and-excitation attention
-            * a small transformer encoder over time windows
-            * a GRU/LSTM head over convolutional features
-            * a plain MLP on the band-power features from Part 1
+        model = Model(inputs=input1, outputs=softmax, name=self.model_name)
+        if print_summary:
+            model.summary()
+        if load_weights:
+            print('loading weights from', self.weights_dir)
+            model.load_weights(self.weights_dir)
+        return model
 
-        Useful regularisers on this dataset (it is small -- ~115 training
-        trials per fold): `max_norm` kernel constraints, dropout,
-        batch normalisation, and keeping the parameter count low.
-        """
-        raise NotImplementedError(
-            'HOMEWORK: implement build() in mixnet/models/HWNet.py'
-        )
+    def evaluate(self, X_test, y_test):
+        import time
+        import numpy as np
+        from sklearn.metrics import classification_report, f1_score
+        model = self.build(print_summary=self.print_summary, load_weights=True)
+        self.compile(model=model)
+        start = time.time()
+        evaluation, test_pred = self.testing(x=X_test, y=y_test)
+        end = time.time()
+        y_pred_argm = np.argmax(test_pred, axis=1)
+        Y = {'y_true': y_test, 'y_pred': y_pred_argm, 'y_pred_clf': test_pred}
 
-        # ---- required epilogue, keep it once your graph is defined ----------
-        # model = Model(inputs=input1, outputs=softmax, name=self.model_name)
-        # if print_summary:
-        #     model.summary()
-        # if load_weights:
-        #     print('loading weights from', self.weights_dir)
-        #     model.load_weights(self.weights_dir)
-        # return model
+        try:
+            mem_usage = tf.config.experimental.get_memory_info('GPU:0')['current']
+        except Exception:
+            mem_usage = 0
+        f1 = f1_score(y_test, y_pred_argm, average=self.f1_average)
+        print("Checking average current GPU memory usage", mem_usage)
+        print("F1-score is computed based on {}".format(self.f1_average))
+        print(classification_report(y_test, y_pred_argm))
+        evaluation.update({'f1-score': f1, 'prediction_time': end - start, 'memory_usage': mem_usage})
+        evaluation.update(dict(zip(['w_' + name + '_loss' for name in self.loss_names], self.best_loss_weights.numpy())))
+        return Y, evaluation
 
     # =========================================================================
     #  Provided for you -- custom training / evaluation steps

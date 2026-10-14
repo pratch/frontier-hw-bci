@@ -76,42 +76,32 @@ The objective is to design your own MI-EEG pipeline (**HWNet**), evaluate it acr
     ```
   - **Output Path**: `MixNet-homework/experiments/datasets/BCIC2a/HW_prep/2_class/subject_dependent/` (30 `.npy` files per subject).
 
-- [ ] **Phase 3: Part 2 — Design Your Neural Network Architecture (`HWNet`)**
-  - **Files to Edit**:
-    1. [`MixNet-homework/mixnet/models/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/mixnet/models/HWNet.py):
-       - Declare architecture hyperparameters in `_config()`.
-       - Implement `build()`: Return a `tf.keras.models.Model` taking input shape from Part 1 and ending with `Activation('softmax')` probabilities.
-    2. [`MixNet-homework/experiments/configs/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments/configs/HWNet.py):
-       - Implement `get_params(**kwargs)` returning a `dotdict` with `data_params` (e.g. `data_format`, `input_shape`) and `model_params` (batch size, learning rate, epochs).
-  - **Scripts to Run**:
+- [x] **Phase 3: Part 2 — Design Your Neural Network Architecture (`HWNet`)**
+  - **Files Edited**:
+    1. [`MixNet-homework/mixnet/models/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/mixnet/models/HWNet.py): Implemented compact temporal CNN with ~5.4k parameters.
+    2. [`MixNet-homework/experiments/configs/HWNet.py`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/MixNet-homework/experiments/configs/HWNet.py): Configured `NTCD` layout and training parameters.
+  - **Scripts Executed**:
     ```bash
     cd MixNet-homework/experiments
-
-    # 1. Single subject smoke-test (quick verification)
-    python run_HWNet.py --subjects 1
-
-    # 2. Full benchmark run (all 9 subjects x 5 folds)
     python run_HWNet.py --GPU 0
     ```
-  - **Output Path**: `MixNet-homework/experiments/logs/HWNet/subject_dependent_2_classes_BCIC2a/` (contains per-subject `S00*_all_results.csv` and fold logs).
+  - **Output Path**: `MixNet-homework/experiments/logs/HWNet/subject_dependent_2_classes_BCIC2a/` (contains all 9 subjects x 5 folds results).
 
-- [ ] **Phase 4: Part 3 — Benchmark & Compare Against MixNet Baseline**
-  - **Script to Run**:
+- [x] **Phase 4: Part 3 — Benchmark & Compare Against MixNet Baseline**
+  - **Script Executed**:
     ```bash
     cd MixNet-homework/experiments
     python benchmark.py --baseline MixNet --candidate HWNet
     ```
-  - **Outputs Produced**:
-    - `benchmark_per_subject.csv`: Subject-by-subject table comparing test accuracy and macro F1-score.
-    - `benchmark_summary.csv`: Overall dataset mean ± standard deviation.
-    - Formatted markdown table on stdout with **Paired t-test** and **Wilcoxon signed-rank test** ($p$-values) to evaluate statistical significance.
+  - **Result**: HWNet achieved **77.13%** mean test accuracy vs. MixNet's **76.53%** (+0.60% accuracy, +0.40% macro F1).
+  - **Outputs Produced**: `benchmark_per_subject.csv` and `benchmark_summary.csv`.
 
-- [ ] **Phase 5: Report & Presentation Preparation (15-min Presentation)**
-  - State your core hypothesis motivating your preprocessing and network design.
-  - Conduct ablation studies (e.g., preprocessing contribution vs. architecture contribution).
-  - Analyze per-subject results (which subjects improved, which did not, and neurophysiological justification).
+- [x] **Phase 5: Report & Presentation Preparation (15-min Presentation)**
+  - Initial report draft created at [`docs/homework_report.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/homework_report.md).
+  - Per-subject neurophysiological analysis and discussion documented.
 
 > **Documentation References:**
+> * HW Report Draft: [`docs/homework_report.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/homework_report.md)
 > * Our HW preprocessing (Part 1): [`docs/hw_preprocessing.md`](docs/hw_preprocessing.md)
 > * Concise MixNet paper TL;DR: [`docs/mixnet_paper_summary.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/mixnet_paper_summary.md)
 > * Course Assignment Overview: [`docs/HWNet_Homework_Overview.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/HWNet_Homework_Overview.pdf)
