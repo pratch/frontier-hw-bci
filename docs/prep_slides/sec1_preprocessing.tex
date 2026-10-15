@@ -204,3 +204,82 @@ Setting & Ours & Ablation \\
 \end{column}
 \end{columns}
 \end{frame}
+
+% ---------------------------------------------------------------------------
+%  Walkthrough of one subject (figures: make_example_figs.py 3)
+% ---------------------------------------------------------------------------
+\newcommand{\exnote}{\vfill{\tiny Subject 3, session T only (144 trials, 72 per class). Example trials = the trial closest to its class mean. CSP and scaler fit on all session T trials of S3 for this picture; no accuracy is computed here.\par}}
+
+\begin{frame}{S3 walkthrough (1/5): raw EEG, $20\times400$}
+\begin{columns}[c]
+\begin{column}{0.66\textwidth}
+\includegraphics[width=\linewidth]{fig/ex_raw.pdf}
+\end{column}
+\begin{column}{0.32\textwidth}
+\begin{itemize}\small
+\item One \mixc{left hand} and one \fitc{right hand} trial: 20 channels, 4 s at 100 Hz
+\item C3 and C4 (over the hand areas) in colour
+\item By eye the two classes look the same: the difference is hidden in \alert{band power}
+\end{itemize}
+\end{column}
+\end{columns}
+\exnote
+\end{frame}
+
+\begin{frame}{S3 walkthrough (2/5): filter bank, $9\times20\times400$}
+\begin{columns}[c]
+\begin{column}{0.66\textwidth}
+\includegraphics[width=\linewidth]{fig/ex_filterbank.pdf}
+\end{column}
+\begin{column}{0.32\textwidth}
+\begin{itemize}\small
+\item Left: C4 of the left hand trial split into 9 bands (each trace scaled on its own)
+\item Right: 8-12 Hz power is lower at \alert{C4 for left hand} and lower at \alert{C3 for right hand}
+\item That is contralateral ERD \lec{51}
+\end{itemize}
+\end{column}
+\end{columns}
+\exnote
+\end{frame}
+
+\begin{frame}{S3 walkthrough (3/5): CSP per band, $36\times400$ (8-12 Hz shown)}
+\begin{columns}[c]
+\begin{column}{0.66\textwidth}
+\includegraphics[width=\linewidth]{fig/ex_csp.pdf}
+\end{column}
+\begin{column}{0.32\textwidth}
+\begin{itemize}\small
+\item Maps: spatial pattern of each filter, i.e.\ where it looks \lec{58}
+\item Filter 1 gives more power for left hand, filter 2 for right hand
+\item Filter 1 shows the gap clearly in these two trials; filter 2 less so, single trials are noisy
+\item 20 channels become 4 signals per band; time is untouched
+\end{itemize}
+\end{column}
+\end{columns}
+\exnote
+\end{frame}
+
+\begin{frame}{S3 walkthrough (4/5): windowed log-variance, $36\times15$}
+\begin{columns}[c]
+\begin{column}{0.62\textwidth}
+\includegraphics[width=\linewidth]{fig/ex_features.pdf}
+\end{column}
+\begin{column}{0.36\textwidth}
+\begin{itemize}\small
+\item The same two trials as the model sees them: 36 rows (9 bands $\times$ 4 filters) $\times$ 15 windows, standardized
+\item One trial alone is noisy; the class difference shows up only across many trials (next slide)
+\end{itemize}
+\end{column}
+\end{columns}
+\exnote
+\end{frame}
+
+\begin{frame}{S3 walkthrough (5/5): do the features separate the classes?}
+\centerline{\includegraphics[width=0.78\linewidth]{fig/ex_separation.pdf}}
+\begin{itemize}\footnotesize
+\item Class means of the two 8-12 Hz filters: the gap is small right after the cue and grows within about 1 s, the timing our windows keep
+\item Right: every trial at the 1.0 s window, using only 2 of the 540 numbers, already mostly separable
+\item S3 is one of the easier subjects (quick LDA check: 95.8\%), so other subjects look less clean
+\end{itemize}
+\exnote
+\end{frame}
