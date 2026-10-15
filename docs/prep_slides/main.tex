@@ -1,0 +1,50 @@
+\documentclass[aspectratio=169,10pt]{beamer}
+% build: latexmk -xelatex -interaction=nonstopmode main.tex
+% figures: see make_figs.py (session T only)
+
+\usetheme{metropolis}
+\metroset{block=fill, numbering=fraction, progressbar=frametitle, sectionpage=none}
+\usepackage{appendixnumberbeamer}
+
+\usepackage{fontspec}
+% Fira from TeX Live, loaded by file name so it works without a system install
+\setsansfont{FiraSans}[Extension=.otf, UprightFont=*-Book, BoldFont=*-SemiBold,
+  ItalicFont=*-BookItalic, BoldItalicFont=*-SemiBoldItalic]
+\setmonofont{FiraMono}[Extension=.otf, UprightFont=*-Regular, BoldFont=*-Bold]
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, decorations.pathreplacing, calc}
+
+% palette (same as the seminar decks)
+\definecolor{fit}{HTML}{1B7F79}     % learned from the training fold
+\definecolor{mix}{HTML}{9A6A00}     % same as MixNet
+\definecolor{qcol}{HTML}{7A3E9D}
+\newcommand{\fitc}[1]{\textcolor{fit}{#1}}
+\newcommand{\mixc}[1]{\textcolor{mix}{#1}}
+\newcommand{\lec}[1]{\unskip\nobreak\hspace{0.35em}\mbox{\scriptsize\textcolor{gray}{[lecture p.#1]}}}
+\newcommand{\uu}[1]{\texttt{#1}}
+
+\newenvironment{keybox}[1][Key point]{%
+  \setbeamercolor{block title}{bg=fit,fg=white}%
+  \setbeamercolor{block body}{bg=fit!8,fg=black}%
+  \begin{block}{\small #1}\small}{\end{block}}
+\newenvironment{qbox}[1][Note]{%
+  \setbeamercolor{block title}{bg=qcol,fg=white}%
+  \setbeamercolor{block body}{bg=qcol!8,fg=black}%
+  \begin{block}{\small #1}\small}{\end{block}}
+
+\setbeamerfont{footnote}{size=\tiny}
+
+\title{Part 1: Preprocessing}
+\subtitle{Filter-bank CSP + band power in short time windows}
+\author{} % TODO: team names
+\institute{\footnotesize ML Frontiers, VISTEC \textperiodcentered\ BCIC IV-2a, left vs right hand MI}
+\date{}
+
+\begin{document}
+\maketitle
+\input{sec1_preprocessing}
+\end{document}
