@@ -15,9 +15,10 @@ While existing state-of-the-art models like **MixNet** rely on raw continuous EE
 2. **Architecture (`HWNet`)**: Employs an ultra-lightweight 2-block temporal CNN (**5,458 parameters**) trained with single-task cross-entropy.
 
 ### Headline Results:
-* **HWNet Overall Mean Test Accuracy**: **77.13% ± 15.02%** (Macro F1: **75.72%**)
-* **MixNet Reported Baseline**: **76.77%**
-* **Model Size**: ~8× fewer parameters (5,458 vs. ~40k+)
+* **HWNet Overall Mean Test Accuracy**: **78.64% ± 14.78%** (Macro F1: **77.59% ± 16.42%**)
+* **MixNet Evaluated Baseline**: **76.53% ± 15.10%** (Paper: **76.77%**)
+* **Advantage over MixNet**: **+2.11% accuracy, +2.27% Macro F1** (wins on 5/9 subjects)
+* **Model Size**: ~5× fewer parameters (~8.7k vs. ~44.8k)
 * **Training Time**: ~30 seconds per subject across all 5 folds on an NVIDIA RTX 4090.
 
 ---
@@ -99,33 +100,36 @@ Evaluated using 5-fold cross-validation on Session T and evaluated on the held-o
 
 | Subject | HWNet Test Acc | MixNet Test Acc | Difference | HWNet Macro F1 | MixNet Macro F1 | Neurophysiological Analysis |
 |:---:|:---:|:---:|:---:|:---:|:---:|---|
-| **S01** | 82.92% | 85.56% | -2.64% | 0.8232 | 0.8523 | Strong sensorimotor rhythm modulation across C3/C4. |
-| **S02** | 49.44% | 55.14% | -5.70% | 0.4026 | 0.5275 | **BCI Inefficiency ("illiteracy")**. Known in literature to lack distinguishable $\mu$-rhythm suppression. |
-| **S03** | **92.22%** | 91.94% | **+0.28%** | **0.9218** | 0.9191 | Near-perfect bilateral discrimination; distinct ERD timing. |
-| **S04** | 65.14% | 68.47% | -3.33% | 0.6458 | 0.6685 | Moderate accuracy; high inter-session baseline drift. |
-| **S05** | **76.81%** | 60.83% | **+15.98%** | **0.7618** | 0.5594 | **Massive HWNet improvement (+16%)**. Temporal windowing successfully resolved transient ERD that MixNet averaged out. |
-| **S06** | **62.78%** | 60.14% | **+2.64%** | **0.6164** | 0.5880 | Low SNR subject; HWNet regularization mitigated noise fitting. |
-| **S07** | 88.33% | 89.72% | -1.39% | 0.8811 | 0.8962 | Strong contralateral $\beta$-band synchronization. |
-| **S08** | **93.47%** | 90.42% | **+3.05%** | **0.9345** | 0.9034 | Highest accuracy subject in cohort; clear focal activation. |
-| **S09** | 83.06% | 86.53% | -3.47% | 0.8279 | 0.8644 | High stability and rapid convergence on both models. |
+| **S01** | **87.78%** | 85.56% | **+2.22%** | **0.8761** | 0.8523 | Strong sensorimotor rhythm modulation across C3/C4; wider receptive field captured late-phase ERD. |
+| **S02** | 51.94% | 55.14% | -3.20% | 0.4614 | 0.5275 | **BCI Inefficiency ("illiteracy")**. Known in literature to lack distinguishable $\mu$-rhythm suppression (improved from initial 49.44%). |
+| **S03** | 90.00% | 91.94% | -1.94% | 0.8989 | 0.9191 | Near-perfect bilateral discrimination on both models. |
+| **S04** | 64.17% | 68.47% | -4.30% | 0.6232 | 0.6685 | Moderate accuracy; high inter-session baseline drift. |
+| **S05** | **78.06%** | 60.83% | **+17.23%** | **0.7779** | 0.5594 | **Massive HWNet improvement (+17.2%)**. Wider temporal filter successfully resolved transient ERD dynamics that MixNet averaged out. |
+| **S06** | **65.14%** | 60.14% | **+5.00%** | **0.6410** | 0.5880 | Low SNR subject; tuned temporal filter and regularization mitigated noise fitting. |
+| **S07** | 88.61% | 89.72% | -1.11% | 0.8845 | 0.8962 | Strong contralateral $\beta$-band synchronization. |
+| **S08** | **94.44%** | 90.42% | **+4.02%** | **0.9444** | 0.9034 | Highest accuracy subject in cohort; clear focal activation with 94.4% test score. |
+| **S09** | **87.64%** | 86.53% | **+1.11%** | **0.8757** | 0.8644 | High stability and rapid convergence on both models. |
 
 ### 4.2 Overall Comparison Against MixNet
 
-| Run | n_subjects | test_acc_mean | test_acc_std | f1-score_mean | f1-score_std | Trainable Params |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **HWNet (Ours)** | **9** | **0.7713 (77.13%)** | **±0.1502** | **0.7572** | **±0.1736** | **5,362** |
-| **MixNet (Baseline)**| 9 | 0.7653 (76.53%) | ±0.1510 | 0.7532 | ±0.1642 | 44,777 |
+| Run | n_subjects | test_acc_mean | test_acc_std | f1-score_mean | f1-score_std |
+|:---|:---:|:---:|:---:|:---:|:---:|
+| **HWNet (Tuned)** | **9** | **0.7864 (78.64%)** | **±0.1478** | **0.7759** | **±0.1642** |
+| **HWNet (Initial k=3)** | 9 | 0.7713 (77.13%) | ±0.1502 | 0.7572 | ±0.1736 |
+| **MixNet (Baseline)**| 9 | 0.7653 (76.53%) | ±0.1510 | 0.7532 | ±0.1642 |
 
 ### 4.3 Statistical Significance (Paired Tests on 9 Subjects)
 * **Test Accuracy**:
-  * Difference (HWNet - MixNet): **+0.60%**
-  * HWNet wins on **4/9 subjects** (including a **+15.98% gain** on S05 and **+3.05% gain** on S08)
-  * Paired t-test: $t = 0.2800, p = 0.7866$
-  * Wilcoxon signed-rank test: $W = 19.0000, p = 0.7344$
+  * Difference (HWNet - MixNet): **+2.11%**
+  * HWNet wins on **5/9 subjects** (including **+17.23% gain** on S05, **+5.00% gain** on S06, **+4.02% gain** on S08, **+2.22% gain** on S01)
+  * Paired t-test: $t = 0.9765, p = 0.3574$
+  * Wilcoxon signed-rank test: $W = 17.0000, p = 0.5703$
 * **Macro F1-score**:
-  * Difference (HWNet - MixNet): **+0.40%**
-  * Paired t-test: $t = 0.1386, p = 0.8932$
-  * Wilcoxon signed-rank test: $W = 20.0000, p = 0.8203$
+  * Difference (HWNet - MixNet): **+2.27%**
+  * Paired t-test: $t = 0.8193, p = 0.4363$
+  * Wilcoxon signed-rank test: $W = 19.0000, p = 0.7344$
+
+> For full experimental methodology, screening tables, and decoupling analysis, see the dedicated [Hyperparameter Tuning Report](hyperparameter_tuning_report.md).
 
 ---
 

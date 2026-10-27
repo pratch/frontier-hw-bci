@@ -151,7 +151,7 @@ class HWNet(models.base.BaseModel):
         """
         self.F1 = 32
         self.F2 = 16
-        self.kernel_length = 3
+        self.kernel_length = 5
         self.pool_length = 2
         self.dropout_rate = 0.5
         self.norm_rate = 0.5
