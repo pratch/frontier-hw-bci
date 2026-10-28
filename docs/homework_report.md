@@ -54,7 +54,7 @@ Raw EEG Trial (20 channels, 400 samples @ 100 Hz = 4.0 s)
 ```
 
 ### 2.3 Strict Data Hygiene (Zero Leakage)
-To avoid over-optimistic evaluation and data snooping:
+To ensure strict separation between training and evaluation distributions:
 * CSP projection matrices $\mathbf{W}$ and feature standardization scalers ($\mu, \sigma$) are fitted strictly on `X_train` inside `fit_transform()`.
 * `transform()` only reads the stored `state` dictionary and applies transformations to validation and test folds without refitting.
 
@@ -98,15 +98,15 @@ The officially selected model architecture uses a temporal kernel of $k=3$ (span
 
 ## 4. Part 3 — Benchmark & Experimental Results
 
-### 4.1 Model Selection Protocol (Zero Test Data Leakage)
-To prevent **test-set selection bias** (data snooping), hyperparameter selection was determined strictly on **Session T 5-fold cross-validation**:
-* **Pre-declared Selection Criterion**: Mean Validation Macro-F1 across 45 validation folds (with Validation Accuracy as co-metric).
+### 4.1 Model Selection Protocol
+Hyperparameter selection was determined strictly on **Session T 5-fold cross-validation** across all 9 subjects ($9 \times 5 = 45$ folds):
+* **Evaluation Criteria**: Mean Validation Macro-F1 across the 45 validation folds (with Validation Accuracy as co-metric).
 * **Validation Ranking**:
   1. **Selected Model: HWNet ($k=3$, $\text{drop}=0.5$)**: Val Acc **83.87% ± 13.71%**, Val Macro-F1 **0.8355 ± 0.1432**
   2. Runner-Up: HWNet ($k=3$, $\text{drop}=0.6$): Val Acc **83.79% ± 13.33%**, Val Macro-F1 **0.8354 ± 0.1375**
   3. Candidate 3: HWNet ($k=5$, $\text{drop}=0.5$): Val Acc **83.50% ± 13.70%**, Val Macro-F1 **0.8327 ± 0.1400**
 
-Because HWNet ($k=3$, $\text{drop}=0.5$) achieved the top score in both validation metrics, it was formally selected *before* inspecting Session E test performance.
+Because HWNet ($k=3$, $\text{drop}=0.5$) achieved the top score in both validation metrics, it was selected as the final model architecture before final testing on Session E.
 
 ### 4.2 Overall Comparison Against MixNet Benchmark
 
