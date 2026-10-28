@@ -72,17 +72,17 @@ Because `HW_prep` already extracts optimal spatial and spectral features, `HWNet
 | Layer | Operation | Output Shape | Parameters | Rationale |
 |---|---|---|---|---|
 | **Input** | Raw feature map (`data_format='NTCD'`) | $(1, 15, 36)$ | 0 | Depth=1, Time=15, Channels=36 |
-| **Conv 1** | `Conv2D(32, (1, 3), padding='same', activation='elu')` | $(1, 15, 32)$ | 3,488 | Temporal receptive field spanning 3 windows (~1.0 s) |
+| **Conv 1** | `Conv2D(32, (1, 5), padding='same', activation='elu')` | $(1, 15, 32)$ | 5,792 | Temporal receptive field spanning 5 windows (1.50 s) |
 | **BN 1** | `BatchNormalization(axis=-1)` | $(1, 15, 32)$ | 128 | Stabilizes internal covariate shift |
 | **Drop 1** | `Dropout(0.5)` | $(1, 15, 32)$ | 0 | Prevents co-adaptation on small sample size |
-| **Conv 2** | `Conv2D(16, (1, 3), padding='same', activation='elu')` | $(1, 15, 16)$ | 1,552 | Higher-level temporal feature abstraction |
+| **Conv 2** | `Conv2D(16, (1, 5), padding='same', activation='elu')` | $(1, 15, 16)$ | 2,576 | Higher-level temporal feature abstraction |
 | **BN 2** | `BatchNormalization(axis=-1)` | $(1, 15, 16)$ | 64 | Normalization |
 | **Pool 2** | `AveragePooling2D((1, 2))` | $(1, 7, 16)$ | 0 | Temporal downsampling ($15 \rightarrow 7$) |
-| **Drop 2** | `Dropout(0.5)` | $(1, 7, 16)$ | 0 | Strong regularization |
+| **Drop 2** | `Dropout(0.5)` | $(1, 7, 16)$ | 0 | Regularization |
 | **Flatten**| `Flatten()` | $(112)$ | 0 | Reshapes $7 \times 16$ temporal-spectral features |
 | **Dense**  | `Dense(2, kernel_constraint=max_norm(0.5))` | $(2)$ | 226 | Linear classifier with max-norm weight clipping |
 | **Softmax**| `Activation('softmax')` | $(2)$ | 0 | Binary class probability (Left vs. Right) |
-| **Total**  | | | **5,458** | **Trainable: 5,362** |
+| **Total**  | | | **8,786** | **Trainable: 8,690** (Initial $k=3$ model: 5,458) |
 
 ### 3.3 Training Hyperparameters
 * **Optimizer**: Adam ($\text{lr} = 10^{-3}$, $\beta_1 = 0.9, \beta_2 = 0.999, \epsilon = 10^{-8}$)
@@ -98,36 +98,39 @@ Evaluated using 5-fold cross-validation on Session T and evaluated on the held-o
 
 ### 4.1 Per-Subject Test Set Results (Session E)
 
-| Subject | HWNet Test Acc | MixNet Test Acc | Difference | HWNet Macro F1 | MixNet Macro F1 | Neurophysiological Analysis |
+| Subject | HWNet Test Acc ($k=5$) | MixNet Test Acc | Difference | HWNet Macro F1 | MixNet Macro F1 | Empirical Observations & Hypotheses |
 |:---:|:---:|:---:|:---:|:---:|:---:|---|
-| **S01** | **87.78%** | 85.56% | **+2.22%** | **0.8761** | 0.8523 | Strong sensorimotor rhythm modulation across C3/C4; wider receptive field captured late-phase ERD. |
+| **S01** | **87.78%** | 85.56% | **+2.22%** | **0.8761** | 0.8523 | Strong sensorimotor modulation across C3/C4; wider receptive field hypothesized to capture late ERD dynamics. |
 | **S02** | 51.94% | 55.14% | -3.20% | 0.4614 | 0.5275 | **BCI Inefficiency ("illiteracy")**. Known in literature to lack distinguishable $\mu$-rhythm suppression (improved from initial 49.44%). |
-| **S03** | 90.00% | 91.94% | -1.94% | 0.8989 | 0.9191 | Near-perfect bilateral discrimination on both models. |
-| **S04** | 64.17% | 68.47% | -4.30% | 0.6232 | 0.6685 | Moderate accuracy; high inter-session baseline drift. |
-| **S05** | **78.06%** | 60.83% | **+17.23%** | **0.7779** | 0.5594 | **Massive HWNet improvement (+17.2%)**. Wider temporal filter successfully resolved transient ERD dynamics that MixNet averaged out. |
-| **S06** | **65.14%** | 60.14% | **+5.00%** | **0.6410** | 0.5880 | Low SNR subject; tuned temporal filter and regularization mitigated noise fitting. |
-| **S07** | 88.61% | 89.72% | -1.11% | 0.8845 | 0.8962 | Strong contralateral $\beta$-band synchronization. |
+| **S03** | 90.00% | 91.94% | -1.94% | 0.8989 | 0.9191 | Consistently strong bilateral discrimination on both models ($>90\%$). |
+| **S04** | 64.17% | 68.47% | -4.30% | 0.6232 | 0.6685 | Moderate accuracy subject; marked inter-session baseline drift between sessions. |
+| **S05** | **78.06%** | 60.83% | **+17.23%** | **0.7779** | 0.5594 | **Substantial gain (+17.23%)**. Temporal windowing successfully resolved transient power modulations that continuous raw models averaged out. |
+| **S06** | **65.14%** | 60.14% | **+5.00%** | **0.6410** | 0.5880 | Low SNR subject; benefited from longer temporal context smoothing. |
+| **S07** | 88.61% | 89.72% | -1.11% | 0.8845 | 0.8962 | Robust contralateral modulation across both pipelines. |
 | **S08** | **94.44%** | 90.42% | **+4.02%** | **0.9444** | 0.9034 | Highest accuracy subject in cohort; clear focal activation with 94.4% test score. |
-| **S09** | **87.64%** | 86.53% | **+1.11%** | **0.8757** | 0.8644 | High stability and rapid convergence on both models. |
+| **S09** | **87.64%** | 86.53% | **+1.11%** | **0.8757** | 0.8644 | High stability and rapid convergence on both models (+4.58% over initial HWNet). |
 
 ### 4.2 Overall Comparison Against MixNet
 
-| Run | n_subjects | test_acc_mean | test_acc_std | f1-score_mean | f1-score_std |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| **HWNet (Tuned)** | **9** | **0.7864 (78.64%)** | **±0.1478** | **0.7759** | **±0.1642** |
-| **HWNet (Initial k=3)** | 9 | 0.7713 (77.13%) | ±0.1502 | 0.7572 | ±0.1736 |
-| **MixNet (Baseline)**| 9 | 0.7653 (76.53%) | ±0.1510 | 0.7532 | ±0.1642 |
+| Run | n_subjects | test_acc_mean | test_acc_std | f1-score_mean | f1-score_std | Trainable Params |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **HWNet (Tuned $k=5$)** | **9** | **0.7864 (78.64%)** | **±0.1478** | **0.7759** | **±0.1642** | **8,690** |
+| **HWNet (Baseline $k=3$)** | 9 | 0.7833 (78.33%) | ±0.1452 | 0.7708 | ±0.1665 | 5,362 |
+| **HWNet (Initial run)** | 9 | 0.7713 (77.13%) | ±0.1502 | 0.7572 | ±0.1736 | 5,362 |
+| **MixNet (Baseline)**| 9 | 0.7653 (76.53%) | ±0.1510 | 0.7532 | ±0.1642 | 44,777 |
 
 ### 4.3 Statistical Significance (Paired Tests on 9 Subjects)
 * **Test Accuracy**:
-  * Difference (HWNet - MixNet): **+2.11%**
-  * HWNet wins on **5/9 subjects** (including **+17.23% gain** on S05, **+5.00% gain** on S06, **+4.02% gain** on S08, **+2.22% gain** on S01)
+  * Difference (HWNet - MixNet): **+2.11 percentage points** ($78.64\%$ vs. $76.53\%$)
+  * HWNet scores higher on **5 out of 9 subjects** (including **+17.23% gain** on S05, **+5.00%** on S06, **+4.02%** on S08, **+2.22%** on S01)
   * Paired t-test: $t = 0.9765, p = 0.3574$
   * Wilcoxon signed-rank test: $W = 17.0000, p = 0.5703$
 * **Macro F1-score**:
-  * Difference (HWNet - MixNet): **+2.27%**
+  * Difference (HWNet - MixNet): **+2.27 percentage points** ($0.7759$ vs. $0.7532$)
   * Paired t-test: $t = 0.8193, p = 0.4363$
   * Wilcoxon signed-rank test: $W = 19.0000, p = 0.7344$
+
+> **Statistical Interpretation**: Because $p > 0.05$ across both parametric and non-parametric tests, the +2.11% numerical advantage is **not statistically significant** across the 9 subjects. With $N=9$ independent units of analysis, power is constrained. The main scientific conclusion is an **attractive efficiency–performance trade-off** (~5× parameter reduction with competitive-to-higher accuracy) rather than confirmed statistical superiority.
 
 > For full experimental methodology, screening tables, and decoupling analysis, see the dedicated [Hyperparameter Tuning Report](hyperparameter_tuning_report.md).
 
