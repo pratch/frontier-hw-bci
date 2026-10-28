@@ -90,17 +90,17 @@ We then designed a controlled search space across **four orthogonal dimensions**
 
 | Config ID | Target Dimension | Varied Parameter | Full Configuration | Hypothesis / Rationale |
 |---|---|---|---|---|
-| **`01_baseline`** | Reference | *None (Default)* | $k=3, \text{drop}=0.5, \text{lr}=10^{-3}, \text{bs}=32, (32, 16)$ | Benchmark reference |
-| **`02_lr_0005`** | Optimization | $\text{lr} = 5 \times 10^{-4}$ | $k=3, \text{drop}=0.5, \mathbf{lr=5\times 10^{-4}}, \text{bs}=32, (32, 16)$ | Smoother convergence |
-| **`03_lr_0003`** | Optimization | $\text{lr} = 3 \times 10^{-4}$ | $k=3, \text{drop}=0.5, \mathbf{lr=3\times 10^{-4}}, \text{bs}=32, (32, 16)$ | Conservative gradient updates |
-| **`04_bs_16`** | Optimization | $\text{batch\_size} = 16$ | $k=3, \text{drop}=0.5, \text{lr}=10^{-3}, \mathbf{bs=16}, (32, 16)$ | More frequent batch updates |
-| **`05_lr_0005_bs16`** | Optimization | $\text{lr} = 5 \times 10^{-4}, \text{bs}=16$ | $k=3, \text{drop}=0.5, \mathbf{lr=5\times 10^{-4}}, \mathbf{bs=16}, (32, 16)$ | Combined slow-rate + small batch |
-| **`06_drop_03`** | Regularization | $\text{dropout} = 0.3$ | $k=3, \mathbf{drop=0.3}, \text{lr}=10^{-3}, \text{bs}=32, (32, 16)$ | Test for underfitting |
-| **`07_drop_06`** | Regularization | $\text{dropout} = 0.6$ | $k=3, \mathbf{drop=0.6}, \text{lr}=10^{-3}, \text{bs}=32, (32, 16)$ | Stricter co-adaptation penalty |
-| **`08_kernel_2`** | Receptive Field | $k = 2$ | $\mathbf{k=2}, \text{drop}=0.5, \text{lr}=10^{-3}, \text{bs}=32, (32, 16)$ | Fast local temporal tracking ($\approx 0.75\,\text{s}$) |
-| **`09_kernel_5`** | Receptive Field | $k = 5$ | $\mathbf{k=5}, \text{drop}=0.5, \text{lr}=10^{-3}, \text{bs}=32, (32, 16)$ | Sustained ERD window ($\approx 1.5\,\text{s}$) |
-| **`10_cap_16_8`** | Capacity | $(F_1, F_2) = (16, 8)$ | $k=3, \text{drop}=0.5, \text{lr}=10^{-3}, \text{bs}=32, \mathbf{(16, 8)}$ | Ultra-compact architecture (~2.5k params) |
-| **`11_cap_48_24`** | Capacity | $(F_1, F_2) = (48, 24)$ | $k=3, \text{drop}=0.5, \text{lr}=10^{-3}, \text{bs}=32, \mathbf{(48, 24)}$ | High-capacity temporal filter bank (~12k params) |
+| **`01_baseline`** | Reference | *None (Default)* | $k=3$, drop=0.5, $\text{lr}=10^{-3}$, bs=32, (32, 16) | Benchmark reference |
+| **`02_lr_0005`** | Optimization | $\text{lr} = 5 \times 10^{-4}$ | $k=3$, drop=0.5, **$\text{lr}=5\times 10^{-4}$**, bs=32, (32, 16) | Smoother convergence |
+| **`03_lr_0003`** | Optimization | $\text{lr} = 3 \times 10^{-4}$ | $k=3$, drop=0.5, **$\text{lr}=3\times 10^{-4}$**, bs=32, (32, 16) | Conservative gradient updates |
+| **`04_bs_16`** | Optimization | $\text{bs} = 16$ | $k=3$, drop=0.5, $\text{lr}=10^{-3}$, **bs=16**, (32, 16) | More frequent batch updates |
+| **`05_lr_0005_bs16`** | Optimization | $\text{lr} = 5 \times 10^{-4},\; \text{bs}=16$ | $k=3$, drop=0.5, **$\text{lr}=5\times 10^{-4}$**, **bs=16**, (32, 16) | Combined slow-rate + small batch |
+| **`06_drop_03`** | Regularization | $\text{drop} = 0.3$ | $k=3$, **drop=0.3**, $\text{lr}=10^{-3}$, bs=32, (32, 16) | Test for underfitting |
+| **`07_drop_06`** | Regularization | $\text{drop} = 0.6$ | $k=3$, **drop=0.6**, $\text{lr}=10^{-3}$, bs=32, (32, 16) | Stricter co-adaptation penalty |
+| **`08_kernel_2`** | Receptive Field | $k = 2$ | **$k=2$**, drop=0.5, $\text{lr}=10^{-3}$, bs=32, (32, 16) | Fast local temporal tracking ($\approx 0.75\,\text{s}$) |
+| **`09_kernel_5`** | Receptive Field | $k = 5$ | **$k=5$**, drop=0.5, $\text{lr}=10^{-3}$, bs=32, (32, 16) | Sustained ERD window ($\approx 1.5\,\text{s}$) |
+| **`10_cap_16_8`** | Capacity | $(F_1, F_2) = (16, 8)$ | $k=3$, drop=0.5, $\text{lr}=10^{-3}$, bs=32, **(16, 8)** | Ultra-compact architecture (~2.5k params) |
+| **`11_cap_48_24`** | Capacity | $(F_1, F_2) = (48, 24)$ | $k=3$, drop=0.5, $\text{lr}=10^{-3}$, bs=32, **(48, 24)** | High-capacity temporal filter bank (~12k params) |
 
 ---
 
@@ -116,14 +116,14 @@ The table below presents the screening results sorted by **Mean Validation Accur
 | Config ID | Dimension Varied | Varied Setting | Mean Val Acc | $\Delta$ vs. Baseline | Std Val Acc | Mean Val Loss | Key Observation |
 |---|---|---|:---:|:---:|:---:|:---:|---|
 | **`08_kernel_2`** | Receptive Field | $k = 2$ | **91.68%** | **+0.01%** | ±6.14% | 0.2159 | Fast response; high S01 accuracy (92.4%) |
-| **`01_baseline`** | Reference | $k=3, \text{drop}=0.5$ | **91.67%** | — | ±4.34% | 0.2143 | Strong all-around performance |
-| **`09_kernel_5`** | Receptive Field | $k = 5$ | **91.20%** | -0.47% | ±5.64% | **0.2124** | **Lowest validation loss of all 11 models** |
+| **`01_baseline`** | Reference | $k=3$, drop=0.5 | **91.67%** | — | ±4.34% | 0.2143 | Strong all-around performance |
+| **`09_kernel_5`** | Receptive Field | $k = 5$ | **91.20%** | -0.47% | ±5.64% | **0.2124** | **Lowest validation loss among standard models** |
 | **`07_drop_06`** | Regularization | $\text{drop} = 0.6$ | **90.98%** | -0.69% | ±5.01% | 0.2128 | High stability across folds |
 | **`11_cap_48_24`**| Capacity | $(F_1, F_2) = (48, 24)$ | 90.96% | -0.71% | ±8.62% | 0.2078 | Good peak acc, but higher fold-to-fold variance |
 | `06_drop_03` | Regularization | $\text{drop} = 0.3$ | 90.74% | -0.93% | ±5.01% | 0.2208 | Overfitted slightly to noisy trials |
 | `04_bs_16` | Optimization | $\text{bs} = 16$ | 90.29% | -1.38% | ±6.32% | 0.2129 | Gradient noise degraded convergence |
-| `02_lr_0005` | Optimization | $\text{lr} = 5 \times 10^{-4}$ | 90.28% | -1.39% | ±5.39% | 0.2374 | Unnecessary slowdown; scheduler already decays lr |
-| `05_lr_0005_bs16`| Optimization | $\text{lr}=5 \times 10^{-4}, \text{bs}=16$ | 89.34% | -2.33% | ±6.28% | 0.2377 | Compounded slow convergence |
+| `02_lr_0005` | Optimization | $\text{lr} = 5 \times 10^{-4}$ | 90.28% | -1.39% | ±5.39% | 0.2374 | Slower convergence; scheduler already decays lr |
+| `05_lr_0005_bs16`| Optimization | $\text{lr}=5 \times 10^{-4},\; \text{bs}=16$ | 89.34% | -2.33% | ±6.28% | 0.2377 | Compounded slow convergence |
 | `03_lr_0003` | Optimization | $\text{lr} = 3 \times 10^{-4}$ | 89.11% | -2.56% | ±5.81% | 0.2630 | Early stopped prematurely due to flat gradients |
 | `10_cap_16_8` | Capacity | $(F_1, F_2) = (16, 8)$ | 88.67% | -3.00% | ±6.37% | 0.2430 | Filter capacity too constrained for 36 input channels |
 
@@ -196,9 +196,9 @@ To ensure clean evaluation, all decisions were based strictly on **Session T Val
 ## 5. Receptive Field Analysis & Neurophysiological Rationale
 
 ### 5.1 Mathematical Receptive Field Formulation
-Given an input representation with window length $\text{win\_len} = 0.50\,\text{s}$ and hop step $\text{win\_step} = 0.25\,\text{s}$, the total continuous temporal duration $T_{\mathrm{RF}}$ spanned by a 1D convolution of kernel length $k$ across adjacent windows is:
+Given an input representation with window length $T_{\mathrm{win}} = 0.50\,\text{s}$ and hop step $T_{\mathrm{step}} = 0.25\,\text{s}$, the total continuous temporal duration $T_{\mathrm{RF}}$ spanned by a 1D convolution of kernel length $k$ across adjacent windows is:
 
-$$T_{\mathrm{RF}} = \text{win\_len} + (k - 1) \times \text{win\_step}$$
+$$T_{\mathrm{RF}} = T_{\mathrm{win}} + (k - 1) \times T_{\mathrm{step}}$$
 
 Evaluating across the explored kernel sizes:
 * **$k = 2$**: $0.50\,\text{s} + (2 - 1) \times 0.25\,\text{s} = \mathbf{0.75\,\text{s}}$
