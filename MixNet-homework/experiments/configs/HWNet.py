@@ -98,7 +98,7 @@ def get_params(dataset='BCIC2a', train_type='subject_dependent', data_type='HW_p
             'epochs': epochs,
             'batch_size': batch_size,
             'dropout_rate': dropout_rate,
-            'kernel_length': 5,
+            'kernel_length': 3,
             'optimizer': Adam(beta_1=0.9, beta_2=0.999, epsilon=1e-08),
             'lr': lr,
             'min_lr': min_lr,

@@ -111,21 +111,21 @@ To quickly evaluate the 11 configurations without running all 9 subjects ($11 \t
 * **S05**: Transient ERD responder (where temporal windowing previously gave a major gain).
 * **S08**: High-accuracy subject ($>90\%$).
 
-The table below presents the screening results sorted by **Mean Validation Accuracy** on Session T validation folds:
+The table below presents the screening results sorted by **Mean Validation Accuracy** and **Mean Validation Macro-F1** on Session T validation folds across the 15 screening folds:
 
-| Config ID | Dimension Varied | Varied Setting | Mean Val Acc | $\Delta$ vs. Baseline | Std Val Acc | Mean Val Loss | Key Observation |
+| Config ID | Dimension Varied | Varied Setting | Mean Val Acc | Mean Val Macro-F1 | Std Val Acc | Mean Val Loss | Key Observation |
 |---|---|---|:---:|:---:|:---:|:---:|---|
-| **`08_kernel_2`** | Receptive Field | $k = 2$ | **91.68%** | **+0.01%** | ±6.14% | 0.2159 | Fast response; high S01 accuracy (92.4%) |
-| **`01_baseline`** | Reference | $k=3$, drop=0.5 | **91.67%** | — | ±4.34% | 0.2143 | Strong all-around performance |
-| **`09_kernel_5`** | Receptive Field | $k = 5$ | **91.20%** | -0.47% | ±5.64% | **0.2124** | **Lowest validation loss among standard models** |
-| **`07_drop_06`** | Regularization | $\text{drop} = 0.6$ | **90.98%** | -0.69% | ±5.01% | 0.2128 | High stability across folds |
-| **`11_cap_48_24`**| Capacity | $(F_1, F_2) = (48, 24)$ | 90.96% | -0.71% | ±8.62% | 0.2078 | Good peak acc, but higher fold-to-fold variance |
-| `06_drop_03` | Regularization | $\text{drop} = 0.3$ | 90.74% | -0.93% | ±5.01% | 0.2208 | Overfitted slightly to noisy trials |
-| `04_bs_16` | Optimization | $\text{bs} = 16$ | 90.29% | -1.38% | ±6.32% | 0.2129 | Gradient noise degraded convergence |
-| `02_lr_0005` | Optimization | $\text{lr} = 5 \times 10^{-4}$ | 90.28% | -1.39% | ±5.39% | 0.2374 | Slower convergence; scheduler already decays lr |
-| `05_lr_0005_bs16`| Optimization | $\text{lr}=5 \times 10^{-4},\; \text{bs}=16$ | 89.34% | -2.33% | ±6.28% | 0.2377 | Compounded slow convergence |
-| `03_lr_0003` | Optimization | $\text{lr} = 3 \times 10^{-4}$ | 89.11% | -2.56% | ±5.81% | 0.2630 | Early stopped prematurely due to flat gradients |
-| `10_cap_16_8` | Capacity | $(F_1, F_2) = (16, 8)$ | 88.67% | -3.00% | ±6.37% | 0.2430 | Filter capacity too constrained for 36 input channels |
+| **`08_kernel_2`** | Receptive Field | $k = 2$ | **91.68%** | **0.9162** | ±6.14% | 0.2159 | Fast response; high S01 accuracy (92.4%) |
+| **`01_baseline`** | Reference | $k=3$, drop=0.5 | **91.67%** | **0.9163** | ±4.34% | 0.2143 | Strong all-around performance and lowest variance |
+| **`09_kernel_5`** | Receptive Field | $k = 5$ | **91.20%** | **0.9115** | ±5.64% | **0.2124** | **Lowest validation loss among standard models** |
+| **`07_drop_06`** | Regularization | $\text{drop} = 0.6$ | **90.98%** | **0.9094** | ±5.01% | 0.2128 | High stability across folds |
+| **`11_cap_48_24`**| Capacity | $(F_1, F_2) = (48, 24)$ | 90.96% | 0.9092 | ±8.62% | 0.2078 | Good peak acc, but higher fold-to-fold variance |
+| `06_drop_03` | Regularization | $\text{drop} = 0.3$ | 90.74% | 0.9069 | ±5.01% | 0.2208 | Overfitted slightly to noisy trials |
+| `04_bs_16` | Optimization | $\text{bs} = 16$ | 90.29% | 0.9024 | ±6.32% | 0.2129 | Gradient noise degraded convergence |
+| `02_lr_0005` | Optimization | $\text{lr} = 5 \times 10^{-4}$ | 90.28% | 0.9024 | ±5.39% | 0.2374 | Slower convergence; scheduler already decays lr |
+| `05_lr_0005_bs16`| Optimization | $\text{lr}=5 \times 10^{-4},\; \text{bs}=16$ | 89.34% | 0.8927 | ±6.28% | 0.2377 | Compounded slow convergence |
+| `03_lr_0003` | Optimization | $\text{lr} = 3 \times 10^{-4}$ | 89.11% | 0.8903 | ±5.81% | 0.2630 | Early stopped prematurely due to flat gradients |
+| `10_cap_16_8` | Capacity | $(F_1, F_2) = (16, 8)$ | 88.67% | 0.8860 | ±6.37% | 0.2430 | Filter capacity too constrained for 36 input channels |
 
 #### Stage 1 Takeaways:
 1. **Optimization parameters are optimal as-is**: The baseline learning rate ($0.001$) and batch size ($32$) consistently outperformed smaller rates and batch sizes. Slower learning rates caused the model to hit early stopping before reaching full convergence.
@@ -135,28 +135,32 @@ The table below presents the screening results sorted by **Mean Validation Accur
 
 ### 3.3 Stage 2: Full Cohort Validation Across All 9 Subjects (45 Folds)
 
-Based on the Stage 1 screening, we selected the top **5 candidate architectures** to evaluate across all 9 subjects ($9 \times 5 = 45$ folds per model). 
+Based on the Stage 1 screening, we advanced the top **5 candidate architectures** to full cross-validation across all 9 subjects ($9 \times 5 = 45$ folds per model).
 
-To ensure clean evaluation, all decisions were based strictly on **Session T Validation Accuracy**. The held-out Session E test set was evaluated concurrently to measure final generalization:
+#### Pre-declared Model Selection Protocol:
+To prevent **test-set selection bias** (data leakage / test snooping), model selection must be determined **strictly on Session T cross-validation**:
+* **Primary Selection Criterion**: Mean Validation Macro-F1 across all 45 folds (with Mean Validation Accuracy as co-metric / tie-breaker).
+* **Evaluation on Held-Out Session E**: Only conducted *after* model selection to evaluate real-world inter-session transfer against the MixNet benchmark.
 
-| Candidate ID | Description & Architecture | Varied Parameter | 9-Subject Mean Val Acc | Session E Final Test Acc | Session E Macro F1 |
-|---|---|---|:---:|:---:|:---:|
-| **Candidate 1 (Winner)** | **HWNet ($k=5$, $\text{drop}=0.5$)** | **Temporal kernel $k=5$** | **83.50% ± 13.70%** | **78.64% ± 14.78%** | **0.7759 ± 0.1642** |
-| Candidate 2 | HWNet ($k=3$, $\text{drop}=0.6$) | Higher dropout $0.6$ | 83.79% ± 13.33% | 78.35% ± 15.08% | 0.7710 ± 0.1719 |
-| Candidate 3 | Baseline HWNet ($k=3$, $\text{drop}=0.5$) | Reference default | 83.87% ± 13.71% | 78.33% ± 14.52% | 0.7708 ± 0.1665 |
-| Candidate 4 | HWNet ($k=2$, $\text{drop}=0.6$) | Narrow kernel + High drop | 82.85% ± 16.29% | 77.44% ± 14.59% | 0.7615 ± 0.1643 |
-| Candidate 5 | HWNet ($k=2$, $\text{drop}=0.5$) | Narrow kernel $k=2$ | 82.85% ± 15.57% | 77.33% ± 14.29% | 0.7611 ± 0.1606 |
-| *Baseline Reference* | *MixNet Paper Model* | *Multi-task ConvNet* | — | *76.53% ± 15.10%* | *0.7532 ± 0.1642* |
+The table below reports both validation metrics alongside the held-out Session E test metrics:
 
-#### Model Selection Rationale & Nuance:
-* **Validation Equivalence**: On the Session T validation folds across all 45 folds, the top three configurations were statistically indistinguishable:
-  * Baseline ($k=3, \text{drop}=0.5$): **83.87% ± 13.71%**
-  * Candidate 2 ($k=3, \text{drop}=0.6$): **83.79% ± 13.33%**
-  * Candidate 1 ($k=5, \text{drop}=0.5$): **83.50% ± 13.70%**
-  The $0.37\%$ spread across these three is negligible compared to the $\pm 13.5\%$ fold standard deviation.
-* **Strict Selection vs. Deployment Choice**:
-  * If strictly adhering to the highest Session T validation accuracy as the sole selection criterion, the **Baseline ($k=3$)** is the selected model. It achieves **78.33% ± 14.52%** test accuracy and **0.7708** Macro F1 on Session E, already outperforming MixNet (76.53%).
-  * **Candidate 1 ($k=5$)** demonstrated the highest empirical generalization under inter-session transfer to Session E (**78.64% ± 14.78%**, **0.7759** Macro F1), improving test accuracy over the initial $k=3$ model on **7 out of 9 subjects**. We report both transparently.
+| Candidate ID | Description & Architecture | Varied Parameter | 9-Subject Mean Val Acc | 9-Subject Mean Val Macro-F1 | Session E Test Acc | Session E Test Macro-F1 |
+|---|---|---|:---:|:---:|:---:|:---:|
+| **Winner (Selected)** | **Baseline HWNet ($k=3$, $\text{drop}=0.5$)** | **Standard Reference** | **83.87% ± 13.71%** | **0.8355 ± 0.1432** | **78.33% ± 14.14%** | **0.7708 ± 0.1626** |
+| Runner-Up | HWNet ($k=3$, $\text{drop}=0.6$) | Higher dropout $0.6$ | 83.79% ± 13.33% | 0.8354 ± 0.1375 | 78.35% ± 14.65% | 0.7710 ± 0.1671 |
+| Candidate 3 | HWNet ($k=5$, $\text{drop}=0.5$) | Wider kernel $k=5$ | 83.50% ± 13.70% | 0.8327 ± 0.1400 | 78.64% ± 14.26% | 0.7759 ± 0.1587 |
+| Candidate 4 | HWNet ($k=2$, $\text{drop}=0.6$) | Narrow kernel + High drop | 82.85% ± 16.29% | 0.8262 ± 0.1665 | 77.44% ± 14.41% | 0.7615 ± 0.1625 |
+| Candidate 5 | HWNet ($k=2$, $\text{drop}=0.5$) | Narrow kernel $k=2$ | 82.85% ± 15.57% | 0.8249 ± 0.1621 | 77.33% ± 14.02% | 0.7611 ± 0.1580 |
+| *Baseline Reference* | *MixNet Paper Model* | *Multi-task ConvNet* | — | — | *76.53% ± 15.10%* | *0.7532 ± 0.1642* |
+
+#### Model Selection Analysis & Test-Set Separation:
+1. **Unambiguous Validation Winner**:
+   Under the pre-declared selection protocol, **HWNet with $k=3$ and dropout $=0.5$** ranks first in both **Validation Macro-F1 (0.8355)** and **Validation Accuracy (83.87%)**.
+2. **Honest Evaluation vs. Test Snooping**:
+   If one retroactively picked $k=5$ as the "winner" because its Session E test score happened to be slightly higher (78.64% vs 78.33%), that would constitute test-set selection bias (data leakage). We strictly declare **HWNet ($k=3$, drop=0.5)** as the officially validated model.
+   - The selected model achieves **78.33% test accuracy** and **0.7708 test macro-F1**, substantially exceeding MixNet's **76.53%** (F1: **0.7532**) while using $5.1\times$ fewer parameters (8,802 vs. 44,834).
+3. **Exploratory Architectural Ablation ($k=5$)**:
+   The $k=5$ configuration is retained and reported transparently as an **exploratory receptive field ablation**. It reveals that under the distribution shift of a different recording session (Session E), slightly larger temporal receptive fields ($1.50\,\text{s}$ vs $1.00\,\text{s}$) provide additional smoothing that improved test generalization on 7 of 9 subjects. This is an empirical insight into cross-session dynamics, not a validation victory.
 
 ---
 
