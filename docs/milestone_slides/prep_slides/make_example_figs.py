@@ -3,7 +3,7 @@
 # session T trials of this subject and no score is computed. Session E unused.
 #
 #   cd MixNet-homework/experiments
-#   PYTHONPATH=.. python ../../docs/prep_slides/make_example_figs.py [subject]
+#   PYTHONPATH=.. python ../../docs/milestone_slides/prep_slides/make_example_figs.py [subject]
 import sys
 
 import mne

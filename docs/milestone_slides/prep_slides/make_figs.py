@@ -2,7 +2,7 @@
 # loaded by the shared loader but never enters any number or plot.
 #
 #   cd MixNet-homework/experiments
-#   PYTHONPATH=.. python ../../docs/prep_slides/make_figs.py
+#   PYTHONPATH=.. python ../../docs/milestone_slides/prep_slides/make_figs.py
 import os
 from concurrent.futures import ProcessPoolExecutor
 

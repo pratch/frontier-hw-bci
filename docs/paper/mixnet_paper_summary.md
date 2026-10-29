@@ -2,7 +2,7 @@
 
 > **Paper Title:** MixNet: Joining Force of Classical and Modern Approaches toward The Comprehensive Pipeline in Motor Imagery EEG Classification  
 > **Authors:** Phairot Autthasan, Rattanaphon Chaisaen, Huy Phan, Maarten De Vos, and Theerawit Wilaiprasitporn  
-> **PDF Reference:** [`docs/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/MixNet_Paper.pdf)
+> **PDF Reference:** [`docs/paper/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/paper/MixNet_Paper.pdf)
 
 ---
 

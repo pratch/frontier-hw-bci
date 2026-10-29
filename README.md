@@ -103,9 +103,9 @@ The objective is to design your own MI-EEG pipeline (**HWNet**), evaluate it acr
 > **Documentation References:**
 > * HW Report Draft: [`docs/homework_report.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/homework_report.md)
 > * Our HW preprocessing (Part 1): [`docs/hw_preprocessing.md`](docs/hw_preprocessing.md)
-> * Concise MixNet paper TL;DR: [`docs/mixnet_paper_summary.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/mixnet_paper_summary.md)
+> * Concise MixNet paper TL;DR: [`docs/paper/mixnet_paper_summary.md`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/paper/mixnet_paper_summary.md)
 > * Course Assignment Overview: [`docs/HWNet_Homework_Overview.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/HWNet_Homework_Overview.pdf)
-> * MixNet Full Paper: [`docs/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/MixNet_Paper.pdf)
+> * MixNet Full Paper: [`docs/paper/MixNet_Paper.pdf`](file:///ist-nas/users/pratchp/homework/frontier-hw-bci/docs/paper/MixNet_Paper.pdf)
 
 ---
 
@@ -352,11 +352,13 @@ $$
 ```text
 frontier-hw-bci/
 ├── docs/                                          # Course & reference PDFs and guides
+│   ├── final_slides/                              # Final combined presentation (Part 1 + Part 2)
+│   ├── milestone_slides/                          # Earlier decks: HWNet_Presentation, prep_slides/ (Part 1 source)
+│   ├── paper/                                     # MixNet paper, supplementary & TL;DR summary
+│   ├── homework_report.md                         # Homework report
+│   ├── hyperparameter_tuning_report.md            # HWNet tuning report
 │   ├── hw_preprocessing.md                        # Our Part 1 pipeline: usage & output shape
-│   ├── mixnet_paper_summary.md                    # Concise TL;DR & design takeaways
-│   ├── HWNet_Homework_Overview.pdf                # Homework overview slides
-│   ├── MixNet_Paper.pdf                           # MixNet main IEEE/arXiv paper
-│   └── Supplementary_Materials_for_MixNet_...pdf  # MixNet supplementary details
+│   └── HWNet_Homework_Overview.pdf                # Homework overview slides
 ├── MixNet-homework/                               # Original homework starter repository
 │   ├── experiments/                               # Experiment runners, configs & datasets
 │   ├── mixnet/                                    # MixNet model & preprocessing library
